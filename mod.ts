@@ -13,6 +13,7 @@ import { NBTIntArray } from "./nbt/NBTIntArray.ts";
 import { NBTLong } from "./nbt/NBTLong.ts";
 import { NBTLongArray } from "./nbt/NBTLongArray.ts";
 import { NBTShort } from "./nbt/NBTShort.ts";
+import { StringBuilder } from "./StringBuilder.ts";
 
 export {
     BinaryReader,
@@ -29,5 +30,6 @@ export {
     NBTList,
     NBTByteArray,
     NBTIntArray,
-    NBTLongArray
+    NBTLongArray,
+    StringBuilder
 }

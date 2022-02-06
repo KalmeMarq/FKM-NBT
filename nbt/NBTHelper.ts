@@ -15,6 +15,7 @@ import { NBTNull } from './NBTNull.ts'
 import { NBTShort } from './NBTShort.ts'
 import { NBTString } from './NBTString.ts'
 import { gzip, gunzip } from 'https://deno.land/x/compress@v0.4.1/mod.ts'
+import { StringNBTReader } from "./StringNBTReader.ts";
 
 export class NBTHelper {
   private constructor() {}
@@ -159,6 +160,167 @@ export class NBTHelper {
       case 12:
         return 'long_array'
     }
+  }
+
+  public static snbtToNBT(text: string): NBTCompound {
+    return StringNBTReader.read(text)
+  }
+
+  public static nbtToJNBT(compound: NBTCompound) {
+    const root: JObj = { type: 'compound', value: {} }
+
+    const keys = compound.getKeys()
+
+    for (const key of keys) {
+      const el = compound.get(key)
+    
+      switch (el.getType()) {
+        case 1:
+          root.value[key] = JNBT.byte((el as NBTByte).byteValue())
+          break;
+        case 2:
+          root.value[key] = JNBT.short((el as NBTShort).shortValue())
+          break;
+        case 3:
+          root.value[key] = JNBT.int((el as NBTInt).intValue())
+          break;
+        case 4:
+          root.value[key] = JNBT.long((el as NBTLong).longValue())
+          break;
+        case 5:
+          root.value[key] = JNBT.float((el as NBTFloat).floatValue())
+          break;
+        case 6:
+          root.value[key] = JNBT.double((el as NBTDouble).doubleValue())
+          break;
+        case 7:
+          root.value[key] = JNBT.byteArray((el as NBTByteArray).getByteArray())
+          break;
+        case 8:
+          root.value[key] = JNBT.string((el as NBTString).asString())
+          break;
+        case 10:
+          root.value[key] = this.nbtToJNBT(el as NBTCompound)
+          break;
+        case 11:
+          root.value[key] = JNBT.intArray((el as NBTIntArray).getIntArray())
+          break;
+        case 12:
+          root.value[key] = JNBT.longArray((el as NBTLongArray).getLongArray())
+          break;
+      }
+    }
+
+    return root
+  }
+
+  public static nbtToJSNBT(compound: NBTCompound) {
+    const obj: Record<string, any> = {}
+
+    const keys = compound.getKeys()
+
+    for (const key of keys) {
+      const el = compound.get(key)
+
+      switch (el.getType()) {
+        case 1:
+          obj[key] = (el as NBTByte).byteValue()
+          break;
+        case 2:
+          obj[key] = (el as NBTShort).shortValue()
+          break;
+        case 3:
+          obj[key] = (el as NBTInt).intValue()
+          break;
+        case 4:
+          obj[key] = (el as NBTLong).longValue()
+          break;
+        case 5:
+          obj[key] = (el as NBTFloat).floatValue()
+          break;
+        case 6:
+          obj[key] = (el as NBTDouble).doubleValue()
+          break;
+        case 7:
+          obj[key] = (el as NBTByteArray).getByteArray()
+          break;
+        case 8:
+          obj[key] = (el as NBTString).asString()
+          break;
+        case 10:
+          obj[key] = this.nbtToJSNBT(el as NBTCompound)
+          break;
+        case 11:
+          obj[key] = (el as NBTIntArray).getIntArray()
+          break;
+        case 12:
+          obj[key] = (el as NBTLongArray).getLongArray()
+          break;
+      }
+    }
+
+    return obj
+  }
+
+  public static nbtToSNBT(compound: NBTCompound) {
+    let str = '{'
+
+    const keys = compound.getKeys()
+
+    let j = 0;
+    for (const key of keys) {
+      const el = compound.get(key)
+
+      switch (el.getType()) {
+        case 1:
+          str += `${key.includes(' ') ? `"${key}"` : key}:${(el as NBTByte).byteValue()}b`
+          break;
+        case 2:
+          str += `${key.includes(' ') ? `"${key}"` : key}:${(el as NBTShort).shortValue()}s`
+          break;
+        case 3:
+          str += `${key.includes(' ') ? `"${key}"` : key}:${(el as NBTInt).shortValue()}`
+          break;
+        case 4:
+          str += `${key.includes(' ') ? `"${key}"` : key}:${(el as NBTLong).longValue()}L`
+          break;
+        case 5:
+          str += `${key.includes(' ') ? `"${key}"` : key}:${(el as NBTFloat).floatValue()}f`
+          break;
+        case 6:
+          str += `${key.includes(' ') ? `"${key}"` : key}:${(el as NBTDouble).doubleValue()}d`
+          break;
+        case 7:
+          str += `${key.includes(' ') ? `"${key}"` : key}:[`
+          const l = (el as NBTByteArray).getByteArray()
+
+          for (let i = 0; i < l.length; i++) {
+            str += l[i] + 'b'
+            
+            if (i + 1 < l.length) {
+              str += ','
+            }
+          }
+
+          str += ']'
+          break;
+        case 8:
+          str += `${key.includes(' ') ? `"${key}"` : key}:"${(el as NBTString).asString()}"`
+          break;
+        case 10:
+          str += `${key.includes(' ') ? `"${key}"` : key}:${this.nbtToSNBT(el as NBTCompound)}`
+          break;
+      }
+
+      if (j + 1 < keys.length) {
+        str += ','
+      }
+
+      j++;
+    }
+
+    str += '}'
+    return str
   }
 
   public static jnbtToNBT<T = NBTElement>(obj: JObj): T {

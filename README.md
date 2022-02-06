@@ -1,5 +1,52 @@
 # MC-KM-NBT
 
+It's still in early development so not everything is done or expected to work yet
+
+## Working on
+#### Parcially available
+```ts
+const boardS = '{id: 46457, name: "Board", createdAt: 1913573456L, blocks: [34b, 35b, 3b] }'
+
+const board = NBTHelper.snbtToNBT(boardS)
+
+NBTHelper.nbtToSNBT(board) // {id: 46457,name:"Board",createdAt:1913573456L,blocks:[34b, 3515b, 351345b]}
+NBTHelper.nbtToJNBT(board) // { "type": "compound", "value": { "id": { "type": "int", "value": 46457 }, "name": { "type": "Board" }, "createdAt": { "type": "long", "value": 1913573456n }, "blocks": { "type": "byte_array", "value": [ { "type": "byte", "value": 34 }, { "type": "byte", "value": 35 }, { "type": "byte", "value": 3 } ] } } }
+NBTHelper.nbtToJSNBT(board) // {"id": 46457, "name": "Board", "createdAt": 1913573456, "blocks": [34, 3515, 351345] }
+```
+
+#### Not available yet
+```ts
+const nbt = NBTHelper.snbtToNBT('{name: "Bot", age: 1000, props: { health: 20, xpLevel: 20L }}')
+
+const treeView = NBTHelper.nbtToTreeView(nbt)
+/*
+TAG_Compound(''): 1 entry
+{
+  TAG_String('name'): 'Bot'
+  TAG_Int('age'): 1000
+  TAG_Compound('props'): 2 entries
+  {
+    TAG_Int('health'): 20
+    TAG_Byte('xpLevel'): 20n
+  }
+}
+*/
+
+const snbt = NBTHelper.nbtToSNBT(nbt, /* minify */false)
+/*
+{
+  name: "Bot",
+  age: 1000,
+  props: {
+    health: 20,
+    xpLevel: 20L
+  }
+}
+*/
+
+const regionFile = NBTHelper.readRegionFile(buffer)
+```
+
 ### Examples
 ```ts
 const comp = new NBTCompound()
@@ -47,6 +94,7 @@ const boardJ = JNBT.comp({
 const board = NBTHelper.jnbtToNBT(boardJ)
 ```
 
+JSNBT: Numbers with decimals are read as NBTFloat and the rest as NBTInt (or NBTLong if it's a bigint)
 ```ts
 const boardJS = {
   id: 6456,
@@ -61,16 +109,4 @@ const boardJS = {
 }
 
 const board = NBTHelper.jsnbtToNBT(boardJS)
-```
-
-#### Not available yet
-```ts
-const boardS = '{id: 46457, name: "Board", createdAt: 1913573456L, users: [I; 34, 3515, 351345] }'
-
-const board = NBTHelper.snbtToNBT(boardS)
-
-NBTHelper.nbtToSNBT(board)
-NBTHelper.nbtToJNBT(board)
-NBTHelper.nbtToJSNBT(board)
-...etc
 ```

@@ -110,6 +110,10 @@ export class NBTCompound extends NBTElement {
     return 0
   }
 
+  public getKeys(): string[] {
+    return Object.keys(this.entries)
+  }
+
   public contains(key: string, type?: number): boolean {
     if (type) {
       const i = this.getElementType(key)
