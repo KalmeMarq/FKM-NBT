@@ -1,15 +1,18 @@
-import BinaryWriter from "../BinaryWriter.ts";
-import { NBTInt } from "./NBTInt.ts";
-import { NBTElement } from "./NBTElement.ts";
-import BinaryReader from "../BinaryReader.ts";
-import { NBTHelper } from "./NBTHelper.ts";
-import { NBTCompound } from "./NBTCompound.ts";
-import { NBTShort } from "./NBTShort.ts";
-import { NBTDouble } from "./NBTDouble.ts";
-import { NBTFloat } from "./NBTFloat.ts";
-import { NBTString } from "./NBTString.ts";
-import { NBTIntArray } from "./NBTIntArray.ts";
-import { NBTLongArray } from "./NBTLongArray.ts";
+import BinaryWriter from '../utils/BinaryWriter.ts'
+import { NBTInt } from './NBTInt.ts'
+import { NBTElement } from './NBTElement.ts'
+import BinaryReader from '../utils/BinaryReader.ts'
+import { NBTHelper } from './NBTHelper.ts'
+import { NBTCompound } from './NBTCompound.ts'
+import { NBTShort } from './NBTShort.ts'
+import { NBTDouble } from './NBTDouble.ts'
+import { NBTFloat } from './NBTFloat.ts'
+import { NBTString } from './NBTString.ts'
+import { NBTIntArray } from './NBTIntArray.ts'
+import { NBTLongArray } from './NBTLongArray.ts'
+import { NBTType } from "./NBTType.ts";
+import { StringNBTWriter } from "./StringNBTWriter.ts";
+import { NBTVisitor } from "./NBTVisitor.ts";
 
 export class NBTList extends NBTElement {
   private value: NBTElement[]
@@ -36,8 +39,12 @@ export class NBTList extends NBTElement {
     for (let i = 0; i < this.value.length; i++) this.value[i].write(writer)
   }
 
-  public static reader = {
-    read<NBTList>(reader: BinaryReader): NBTList {
+  public acceptWriter(visitor: NBTVisitor): void {
+    visitor.visitList(this)
+  }
+
+  public static TYPE: NBTType<NBTList> = new class extends NBTType<NBTList> {
+    public read<NBTList>(reader: BinaryReader): NBTList {
       const t = reader.readByte()
       const l = reader.readInt()
       const r = NBTHelper.getById(t)
@@ -50,6 +57,14 @@ export class NBTList extends NBTElement {
 
       return new NBTList(arr, t) as unknown as NBTList
     }
+  
+    public getTreeViewName(): string {
+      return 'TAG_List'
+    }
+  }
+
+  public getNBTType(): NBTType<NBTList> {
+    return NBTList.TYPE
   }
 
   public set(i: number, element: NBTElement): NBTElement {
@@ -148,5 +163,26 @@ export class NBTList extends NBTElement {
 
   public size(): number {
     return this.value.length
+  }
+
+  public asString(): string {
+    return new StringNBTWriter().apply(this)
+  }
+
+  /** @deprecated */
+  public static reader = {
+    read<NBTList>(reader: BinaryReader): NBTList {
+      const t = reader.readByte()
+      const l = reader.readInt()
+      const r = NBTHelper.getById(t)
+
+      const arr = new Array<NBTElement>(l)
+
+      for (let i = 0; i < l; i++) {
+        arr[i] = r.read(reader)
+      }
+
+      return new NBTList(arr, t) as unknown as NBTList
+    }
   }
 }

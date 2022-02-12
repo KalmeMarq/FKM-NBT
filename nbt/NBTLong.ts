@@ -1,9 +1,12 @@
-import BinaryReader from "../BinaryReader.ts";
-import BinaryWriter from "../BinaryWriter.ts";
-import { NBTElement } from "./NBTElement.ts";
-import { NBTTypeReader } from "./NBTTypeReader.ts";
+import BinaryReader from '../utils/BinaryReader.ts'
+import BinaryWriter from '../utils/BinaryWriter.ts'
+import { NBTElement } from './NBTElement.ts'
+import { NBTNumber } from "./NBTNumber.ts";
+import { NBTType } from "./NBTType.ts";
+import { NBTVisitor } from "./NBTVisitor.ts";
+import { StringNBTWriter } from "./StringNBTWriter.ts";
 
-export class NBTLong extends NBTElement {
+export class NBTLong extends NBTNumber {
   private value: bigint
 
   public constructor(value?: bigint) {
@@ -23,10 +26,22 @@ export class NBTLong extends NBTElement {
     writer.writeLong(this.value)
   }
 
-  public static reader = {
-    read<NBTLong>(reader: BinaryReader): NBTLong {
+  public acceptWriter(visitor: NBTVisitor): void {
+    visitor.visitLong(this)
+  }
+
+  public static TYPE: NBTType<NBTLong> = new class extends NBTType<NBTLong> {
+    public read<NBTLong>(reader: BinaryReader): NBTLong {
       return NBTLong.of(reader.readLong()) as unknown as NBTLong
     }
+  
+    public getTreeViewName(): string {
+      return 'TAG_Long'
+    }
+  }
+
+  public getNBTType(): NBTType<NBTLong> {
+    return NBTLong.TYPE
   }
   
   public byteValue(): number {
@@ -55,5 +70,16 @@ export class NBTLong extends NBTElement {
 
   public numberValue(): number {
     return Number(this.value)
+  }
+
+  public asString(): string {
+    return new StringNBTWriter().apply(this)
+  }
+
+  /** @deprecated */
+  public static reader = {
+    read<NBTLong>(reader: BinaryReader): NBTLong {
+      return NBTLong.of(reader.readLong()) as unknown as NBTLong
+    }
   }
 }

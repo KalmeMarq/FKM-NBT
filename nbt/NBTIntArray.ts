@@ -1,7 +1,10 @@
-import BinaryWriter from "../BinaryWriter.ts";
-import { NBTInt } from "./NBTInt.ts";
-import { NBTElement } from "./NBTElement.ts";
-import BinaryReader from "../BinaryReader.ts";
+import BinaryWriter from '../utils/BinaryWriter.ts'
+import { NBTInt } from './NBTInt.ts'
+import { NBTElement } from './NBTElement.ts'
+import BinaryReader from '../utils/BinaryReader.ts'
+import { NBTType } from "./NBTType.ts";
+import { StringNBTWriter } from "./StringNBTWriter.ts";
+import { NBTVisitor } from "./NBTVisitor.ts";
 
 export class NBTIntArray extends NBTElement {
   private value: number[]
@@ -20,16 +23,25 @@ export class NBTIntArray extends NBTElement {
     for (let i = 0; i < this.value.length; i++) writer.writeInt(this.value[i])
   }
 
-  public static reader = {
-    read<NBTIntArray>(reader: BinaryReader): NBTIntArray {
+  public acceptWriter(visitor: NBTVisitor): void {
+    visitor.visitIntArray(this)
+  }
+
+  public static TYPE: NBTType<NBTIntArray> = new class extends NBTType<NBTIntArray> {
+    public read<NBTIntArray>(reader: BinaryReader): NBTIntArray {
       const l = reader.readInt()
       const arr = new Array(l)
-      for (let i = 0; i < l; i++) {
-        arr[i] = reader.readInt()
-      }
-
+      reader.readFully(arr)
       return new NBTIntArray(arr) as unknown as NBTIntArray
     }
+  
+    public getTreeViewName(): string {
+      return 'TAG_Int_Array'
+    }
+  }
+
+  public getNBTType(): NBTType<NBTIntArray> {
+    return NBTIntArray.TYPE
   }
 
   public set(i: number, element: NBTInt): NBTInt {
@@ -56,5 +68,22 @@ export class NBTIntArray extends NBTElement {
   
   public getIntArray(): number[] {
     return this.value
+  }
+
+  public asString(): string {
+    return new StringNBTWriter().apply(this)
+  }
+
+  /** @deprecated */
+  public static reader = {
+    read<NBTIntArray>(reader: BinaryReader): NBTIntArray {
+      const l = reader.readInt()
+      const arr = new Array(l)
+      for (let i = 0; i < l; i++) {
+        arr[i] = reader.readInt()
+      }
+
+      return new NBTIntArray(arr) as unknown as NBTIntArray
+    }
   }
 }

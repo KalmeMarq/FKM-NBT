@@ -1,5 +1,5 @@
-import BinaryReader from '../BinaryReader.ts'
-import BinaryWriter from '../BinaryWriter.ts'
+import BinaryReader from '../utils/BinaryReader.ts'
+import BinaryWriter from '../utils/BinaryWriter.ts'
 import { NBTByte } from './NBTByte.ts'
 import { NBTByteArray } from './NBTByteArray.ts'
 import { NBTCompound } from './NBTCompound.ts'
@@ -14,11 +14,22 @@ import { NBTLongArray } from './NBTLongArray.ts'
 import { NBTNull } from './NBTNull.ts'
 import { NBTShort } from './NBTShort.ts'
 import { NBTString } from './NBTString.ts'
-import { gzip, gunzip } from 'https://deno.land/x/compress@v0.4.1/mod.ts'
+import { gzip, gunzip } from '../deps.ts'
 import { StringNBTReader } from "./StringNBTReader.ts";
+import { NBTType } from "./NBTType.ts";
+import { StringNBTWriter } from "./StringNBTWriter.ts";
+import { TreeViewNBTWriter } from "./TreeViewNBTWriter.ts";
 
 export class NBTHelper {
   private constructor() {}
+
+  public static nbtToSNBT(tag: NBTElement, prettify?: boolean, colorType: 'motd' | 'ansi' | 'none' = 'none') {
+    return new StringNBTWriter(prettify, (colorType === 'none' ? 0 : colorType === 'motd' ? 1 : 2)).apply(tag)
+  }
+
+  public static nbtToTreeView(tag: NBTElement) {
+    return new TreeViewNBTWriter().apply(tag)
+  }
 
   public static write(element: NBTElement, littleEndian?: boolean, bedrockHeader?: boolean): Uint8Array {
     const writer = new BinaryWriter()
@@ -68,9 +79,29 @@ export class NBTHelper {
 
     NBTString.skip(reader)
 
-    return NBTHelper.getById(i).read(reader)
+    return NBTHelper.byId(i).read(reader)
   }
 
+  public static byId(id: number): NBTType<NBTElement> {
+    switch (id) {
+      case 0: return NBTNull.TYPE
+      case 1: return NBTByte.TYPE
+      case 2: return NBTShort.TYPE
+      case 3: return NBTInt.TYPE
+      case 4: return NBTLong.TYPE
+      case 5: return NBTFloat.TYPE
+      case 6: return NBTDouble.TYPE
+      case 7: return NBTByteArray.TYPE
+      case 8: return NBTString.TYPE
+      case 9: return NBTList.TYPE
+      case 10: return NBTCompound.TYPE
+      case 11: return NBTIntArray.TYPE
+      case 12: return NBTLongArray.TYPE
+      default: throw new RangeError(`There is no NBT Tag of Id ${id}`)
+    }
+  }
+
+  /** @deprecated */
   public static getById(id: number) {
     switch (id) {
       case 0:
@@ -118,7 +149,7 @@ export class NBTHelper {
         return 5
       case 'double':
         return 6
-      case 'byte_array':
+      case 'byteArray':
         return 7
       case 'string':
         return 8
@@ -126,9 +157,9 @@ export class NBTHelper {
         return 9
       case 'compound':
         return 10
-      case 'int_array':
+      case 'intArray':
         return 11
-      case 'long_array':
+      case 'longArray':
         return 12
     }
   }
@@ -148,7 +179,7 @@ export class NBTHelper {
       case 6:
         return 'double'
       case 7:
-        return 'byte_array'
+        return 'byteArray'
       case 8:
         return 'string'
       case 9:
@@ -156,9 +187,9 @@ export class NBTHelper {
       case 10:
         return 'compound'
       case 11:
-        return 'int_array'
+        return 'intArray'
       case 12:
-        return 'long_array'
+        return 'longArray'
     }
   }
 
@@ -262,67 +293,6 @@ export class NBTHelper {
     return obj
   }
 
-  public static nbtToSNBT(compound: NBTCompound) {
-    let str = '{'
-
-    const keys = compound.getKeys()
-
-    let j = 0;
-    for (const key of keys) {
-      const el = compound.get(key)
-
-      switch (el.getType()) {
-        case 1:
-          str += `${key.includes(' ') ? `"${key}"` : key}:${(el as NBTByte).byteValue()}b`
-          break;
-        case 2:
-          str += `${key.includes(' ') ? `"${key}"` : key}:${(el as NBTShort).shortValue()}s`
-          break;
-        case 3:
-          str += `${key.includes(' ') ? `"${key}"` : key}:${(el as NBTInt).shortValue()}`
-          break;
-        case 4:
-          str += `${key.includes(' ') ? `"${key}"` : key}:${(el as NBTLong).longValue()}L`
-          break;
-        case 5:
-          str += `${key.includes(' ') ? `"${key}"` : key}:${(el as NBTFloat).floatValue()}f`
-          break;
-        case 6:
-          str += `${key.includes(' ') ? `"${key}"` : key}:${(el as NBTDouble).doubleValue()}d`
-          break;
-        case 7:
-          str += `${key.includes(' ') ? `"${key}"` : key}:[`
-          const l = (el as NBTByteArray).getByteArray()
-
-          for (let i = 0; i < l.length; i++) {
-            str += l[i] + 'b'
-            
-            if (i + 1 < l.length) {
-              str += ','
-            }
-          }
-
-          str += ']'
-          break;
-        case 8:
-          str += `${key.includes(' ') ? `"${key}"` : key}:"${(el as NBTString).asString()}"`
-          break;
-        case 10:
-          str += `${key.includes(' ') ? `"${key}"` : key}:${this.nbtToSNBT(el as NBTCompound)}`
-          break;
-      }
-
-      if (j + 1 < keys.length) {
-        str += ','
-      }
-
-      j++;
-    }
-
-    str += '}'
-    return str
-  }
-
   public static jnbtToNBT<T = NBTElement>(obj: JObj): T {
     if (obj.type === 'list') {
       const arr: NBTElement[] = []
@@ -353,13 +323,13 @@ export class NBTHelper {
             case 'string':
               arr.push(NBTString.of(v.value))
               break;
-            case 'byte_array':
+            case 'byteArray':
               arr.push(new NBTByteArray(v.value))
               break;
-            case 'int_array':
+            case 'intArray':
               arr.push(new NBTIntArray(v.value))
               break;
-            case 'long_array':
+            case 'longArray':
               arr.push(new NBTLongArray(v.value))
               break;
             case 'compound':
@@ -403,13 +373,13 @@ export class NBTHelper {
           case 'string':
             root.putString(k, v.value)
             break;
-          case 'byte_array':
+          case 'byteArray':
             root.putByteArray(k, v.value)
             break;
-          case 'int_array':
+          case 'intArray':
             root.putIntArray(k, v.value)
             break;
-          case 'long_array':
+          case 'longArray':
             root.putLongArray(k, v.value)
             break;
           case 'list':
@@ -505,16 +475,16 @@ export class NBTHelper {
 }
 
 export type idEL = 10 | 9 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 11 | 12
-export type nameEL = 'compound' | 'list' | 'byte' | 'short' | 'int' | 'long' | 'float' | 'double' | 'string' | 'byte_array' | 'int_array' | 'long_array'
+export type nameEL = 'compound' | 'list' | 'byte' | 'short' | 'int' | 'long' | 'float' | 'double' | 'string' | 'byteArray' | 'intArray' | 'longArray'
 
 export type JObj =
     { type: 'compound', value: JCompObj } |
     { type: 'byte' | 'short' | 'int' | 'float' | 'double', value: number } |
     { type: 'string', value: string } |
     { type: 'long', value: bigint } |
-    { type: 'byte_array' | 'int_array', value: number[] } |
-    { type: 'long_array', value: bigint[] } |
-    { type: 'list', value: JObj[] }
+    { type: 'byteArray' | 'intArray', value: number[] } |
+    { type: 'longArray', value: bigint[] } |
+    { type: 'list', value: JObj[]/* { type: number, value: JObj[] } */ }
 
 export type JCompObj = Record<string, JObj>
 export type JSObj = { [key: string]: number | string | bigint | JSObj }
@@ -542,21 +512,21 @@ export const JNBT = {
       return { type: 'double', value: value }
     },
     byteArray: (value: number[]): JObj => {
-      return { type: 'byte_array', value: value }
+      return { type: 'byteArray', value: value }
     },
     intArray: (value: number[]): JObj => {
-      return { type: 'int_array', value: value }
+      return { type: 'intArray', value: value }
     },
     longArray: (value: bigint[]): JObj => {
-      return { type: 'long_array', value: value }
+      return { type: 'longArray', value: value }
     },
     list: (value: JObj[]): JObj => {
       return { type: 'list', value: value }
     },
-    boolean: (value: boolean): JObj => {
-        return { type: 'byte', value: value ? 0 : 1 }
+    bool: (value: boolean): JObj => {
+      return { type: 'byte', value: value ? 1 : 0 }
     },
     string: (value: string): JObj => {
-        return { type: 'string', value: value }
+      return { type: 'string', value: value }
     }
 }

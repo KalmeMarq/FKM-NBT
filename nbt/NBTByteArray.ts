@@ -1,7 +1,10 @@
-import BinaryReader from "../BinaryReader.ts";
-import BinaryWriter from "../BinaryWriter.ts";
-import { NBTByte } from "./NBTByte.ts";
-import { NBTElement } from "./NBTElement.ts";
+import BinaryReader from '../utils/BinaryReader.ts'
+import BinaryWriter from '../utils/BinaryWriter.ts'
+import { NBTByte } from './NBTByte.ts'
+import { NBTElement } from './NBTElement.ts'
+import { NBTType } from "./NBTType.ts";
+import { NBTVisitor } from "./NBTVisitor.ts";
+import { StringNBTWriter } from "./StringNBTWriter.ts";
 
 export class NBTByteArray extends NBTElement {
   private value: number[]
@@ -20,13 +23,25 @@ export class NBTByteArray extends NBTElement {
     writer.write(this.value)
   }
 
-  public static reader = {
-    read<NBTByteArray>(reader: BinaryReader): NBTByteArray {
+  public acceptWriter(visitor: NBTVisitor): void {
+    visitor.visitByteArray(this)
+  }
+
+  public static TYPE: NBTType<NBTByteArray> = new class extends NBTType<NBTByteArray> {
+    public read<NBTByteArray>(reader: BinaryReader): NBTByteArray {
       const l = reader.readInt()
       const arr = new Array(l)
       reader.readFully(arr)
       return new NBTByteArray(arr) as unknown as NBTByteArray
     }
+  
+    public getTreeViewName(): string {
+      return 'TAG_Byte_Array'
+    }
+  }
+
+  public getNBTType(): NBTType<NBTByteArray> {
+    return NBTByteArray.TYPE
   }
 
   public set(i: number, element: NBTByte): NBTByte {
@@ -53,5 +68,19 @@ export class NBTByteArray extends NBTElement {
   
   public getByteArray(): number[] {
     return this.value
+  }
+
+  public asString(): string {
+    return new StringNBTWriter().apply(this)
+  }
+
+  /** @deprecated */
+  public static reader = {
+    read<NBTByteArray>(reader: BinaryReader): NBTByteArray {
+      const l = reader.readInt()
+      const arr = new Array(l)
+      reader.readFully(arr)
+      return new NBTByteArray(arr) as unknown as NBTByteArray
+    }
   }
 }

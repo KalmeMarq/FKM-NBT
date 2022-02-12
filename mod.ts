@@ -1,8 +1,8 @@
-import BinaryWriter from './BinaryWriter.ts'
-import BinaryReader from './BinaryReader.ts'
-import { NBTElement } from "./nbt/NBTElement.ts";
+import BinaryWriter from './utils/BinaryWriter.ts'
+import BinaryReader from './utils/BinaryReader.ts'
 import { NBTCompound } from "./nbt/NBTCompound.ts";
-import { NBTHelper, JNBT } from "./nbt/NBTHelper.ts";
+import { NBTUtils, JNBT } from "./nbt/NBTUtils.ts";
+import { NBTString } from "./nbt/NBTString.ts";
 import { NBTList } from "./nbt/NBTList.ts";
 import { NBTByte } from "./nbt/NBTByte.ts";
 import { NBTByteArray } from "./nbt/NBTByteArray.ts";
@@ -13,14 +13,19 @@ import { NBTIntArray } from "./nbt/NBTIntArray.ts";
 import { NBTLong } from "./nbt/NBTLong.ts";
 import { NBTLongArray } from "./nbt/NBTLongArray.ts";
 import { NBTShort } from "./nbt/NBTShort.ts";
-import { StringBuilder } from "./StringBuilder.ts";
+import { StringNBTWriter } from "./nbt/StringNBTWriter.ts";
+import { StringNBTReader } from "./nbt/StringNBTReader.ts";
+import { TreeViewNBTWriter } from "./nbt/TreeViewNBTWriter.ts";
+import { StringBuilder } from "./utils/StringBuilder.ts";
+import { StringReader } from "./utils/StringReader.ts";
 
 export {
     BinaryReader,
     BinaryWriter,
-    NBTHelper,
+    NBTUtils,
     JNBT,
     NBTCompound,
+    NBTString,
     NBTByte,
     NBTShort,
     NBTInt,
@@ -31,5 +36,9 @@ export {
     NBTByteArray,
     NBTIntArray,
     NBTLongArray,
-    StringBuilder
+    StringBuilder,
+    StringReader,
+    StringNBTWriter,
+    StringNBTReader,
+    TreeViewNBTWriter
 }

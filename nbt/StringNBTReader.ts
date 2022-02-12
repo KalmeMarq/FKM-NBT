@@ -1,17 +1,19 @@
-import { StringReader } from "../StringReader.ts"
-import { NBTByte } from "./NBTByte.ts";
-import { NBTByteArray } from "./NBTByteArray.ts";
-import { NBTCompound } from "./NBTCompound.ts"
-import { NBTDouble } from "./NBTDouble.ts";
-import { NBTElement } from "./NBTElement.ts"
-import { NBTFloat } from "./NBTFloat.ts";
-import { NBTInt } from "./NBTInt.ts";
-import { NBTIntArray } from "./NBTIntArray.ts";
-import { NBTList } from "./NBTList.ts";
-import { NBTLong } from "./NBTLong.ts";
-import { NBTLongArray } from "./NBTLongArray.ts";
-import { NBTShort } from "./NBTShort.ts";
-import { NBTString } from "./NBTString.ts";
+import { StringReader } from '../utils/StringReader.ts'
+import { NBTByte } from './NBTByte.ts';
+import { NBTByteArray } from './NBTByteArray.ts';
+import { NBTCompound } from './NBTCompound.ts'
+import { NBTDouble } from './NBTDouble.ts';
+import { NBTElement } from './NBTElement.ts'
+import { NBTFloat } from './NBTFloat.ts';
+import { NBTInt } from './NBTInt.ts';
+import { NBTIntArray } from './NBTIntArray.ts';
+import { NBTList } from './NBTList.ts';
+import { NBTLong } from './NBTLong.ts';
+import { NBTLongArray } from './NBTLongArray.ts';
+import { NBTNumber } from "./NBTNumber.ts";
+import { NBTShort } from './NBTShort.ts';
+import { NBTString } from './NBTString.ts';
+import { NBTType } from "./NBTType.ts";
 
 export class StringNBTReader {
   private static DOUBLE_PATTERN_IMPLICIT: RegExp = /[-+]?(?:[0-9]+[.]|[0-9]*[.][0-9]+)(?:e[-+]?[0-9]+)?/i
@@ -93,41 +95,41 @@ export class StringNBTReader {
         throw new SyntaxError('Expected value')
     }
     if (c == 'B') {
-        return new NBTByteArray(this.readArray(NBTByteArray, NBTByte));
+        return new NBTByteArray(this.readArray<number>(NBTByte.TYPE))
     }
     if (c == 'L') {
-        return new NBTLongArray(this.readArray(NBTLongArray, NBTLong));
+        return new NBTLongArray(this.readArray<bigint>(NBTLong.TYPE))
     }
     if (c == 'I') {
-        return new NBTIntArray(this.readArray(NBTIntArray, NBTInt));
+        return new NBTIntArray(this.readArray<number>(NBTInt.TYPE))
     }
     this.reader.setCursor(i);
     throw new Error('Array type is not allowed')
   }
 
-  private readArray<T extends number | bigint>(arrayTypeReader: any, typeReader: any): T[] {
-    const list: T[] = [];
+  private readArray<T>(typeReader: NBTType<NBTElement>): T[] {
+    const list = [];
     while (this.reader.peek() != ']') {
         const i = this.reader.getCursor();
         const nbtElement = this.parseElement();
-        const nbtType = nbtElement.getType();
-        // if (nbtType !== typeReader) {
-        //     this.reader.setCursor(i);
-        //     throw ARRAY_MIXED.createWithContext(this.reader, nbtType.getCommandFeedbackName(), arrayTypeReader.getCommandFeedbackName());
-        // }
-        if (typeReader == NBTByte) {
-            list.push((nbtElement as any).byteValue());
-        } else if (typeReader == NBTLong) {
-            list.push((nbtElement as any).longValue());
+        const nbtType = nbtElement.getNBTType();
+        if (nbtType !== typeReader) {
+            this.reader.setCursor(i)
+            throw new Error('Array has mixed values')
+        }
+        if (typeReader == NBTByte.TYPE) {
+            list.push((nbtElement as NBTByte).byteValue())
+        } else if (typeReader == NBTLong.TYPE) {
+            list.push((nbtElement as NBTLong).longValue())
         } else {
-            list.push((nbtElement as any).intValue());
+            list.push((nbtElement as NBTNumber).intValue())
         }
         if (!this.readComma()) break;
         if (this.reader.canRead()) continue;
         throw new SyntaxError('Expected value')
     }
     this.expect(']');
-    return list
+    return list as unknown as T[]
 }
 
   private parseList(): NBTElement {

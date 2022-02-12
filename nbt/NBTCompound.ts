@@ -1,18 +1,21 @@
-import BinaryReader from "../BinaryReader.ts";
-import BinaryWriter from "../BinaryWriter.ts";
-import { NBTByte } from "./NBTByte.ts"
-import { NBTByteArray } from "./NBTByteArray.ts";
-import { NBTDouble } from "./NBTDouble.ts";
-import { NBTElement } from "./NBTElement.ts"
-import { NBTFloat } from "./NBTFloat.ts";
-import { NBTHelper } from "./NBTHelper.ts";
-import { NBTInt } from "./NBTInt.ts";
-import { NBTIntArray } from "./NBTIntArray.ts";
-import { NBTList } from "./NBTList.ts";
-import { NBTLong } from "./NBTLong.ts";
-import { NBTLongArray } from "./NBTLongArray.ts";
-import { NBTShort } from "./NBTShort.ts";
-import { NBTString } from "./NBTString.ts"
+import BinaryReader from '../utils/BinaryReader.ts'
+import BinaryWriter from '../utils/BinaryWriter.ts'
+import { NBTByte } from './NBTByte.ts'
+import { NBTByteArray } from './NBTByteArray.ts'
+import { NBTDouble } from './NBTDouble.ts'
+import { NBTElement } from './NBTElement.ts'
+import { NBTFloat } from './NBTFloat.ts'
+import { NBTHelper } from './NBTHelper.ts'
+import { NBTInt } from './NBTInt.ts'
+import { NBTIntArray } from './NBTIntArray.ts'
+import { NBTList } from './NBTList.ts'
+import { NBTLong } from './NBTLong.ts'
+import { NBTLongArray } from './NBTLongArray.ts'
+import { NBTShort } from './NBTShort.ts'
+import { NBTString } from './NBTString.ts'
+import { NBTType } from "./NBTType.ts";
+import { NBTVisitor } from "./NBTVisitor.ts";
+import { StringNBTWriter } from "./StringNBTWriter.ts";
 
 export class NBTCompound extends NBTElement {
   private entries: Record<string, NBTElement>
@@ -50,6 +53,33 @@ export class NBTCompound extends NBTElement {
     }
     
     writer.writeByte(0)
+  }
+
+  public acceptWriter(visitor: NBTVisitor): void {
+    visitor.visitCompound(this)
+  }
+
+  public static TYPE: NBTType<NBTCompound> = new class extends NBTType<NBTCompound> {
+    public read<NBTCompound>(reader: BinaryReader): NBTCompound {
+      let b = 0;
+      let entries: Record<string, NBTElement> = {}
+
+      while ((b = reader.readByte()) !== 0) {
+        const name = reader.readString()
+        const el = NBTHelper.getById(b).read(reader) as NBTElement
+        if (el) entries[name] = el
+      }
+
+      return new NBTCompound(entries) as unknown as NBTCompound
+    }
+  
+    public getTreeViewName(): string {
+      return 'TAG_Compound'
+    }
+  }
+
+  public getNBTType(): NBTType<NBTCompound> {
+    return NBTCompound.TYPE
   }
 
   public put(key: string, element: NBTElement): void {
@@ -224,6 +254,11 @@ export class NBTCompound extends NBTElement {
     delete this.entries[key]
   }
 
+  public asString(): string {
+    return new StringNBTWriter().apply(this)
+  }
+
+  /** @deprecated */
   public static reader = {
     read<NBTCompound>(reader: BinaryReader): NBTCompound {
       let b = 0;

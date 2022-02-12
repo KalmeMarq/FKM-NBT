@@ -1,7 +1,10 @@
-import BinaryWriter from "../BinaryWriter.ts";
-import { NBTLong } from "./NBTLong.ts";
-import { NBTElement } from "./NBTElement.ts";
-import BinaryReader from "../BinaryReader.ts";
+import BinaryWriter from '../utils/BinaryWriter.ts'
+import { NBTLong } from './NBTLong.ts'
+import { NBTElement } from './NBTElement.ts'
+import BinaryReader from '../utils/BinaryReader.ts'
+import { NBTType } from "./NBTType.ts";
+import { StringNBTWriter } from "./StringNBTWriter.ts";
+import { NBTVisitor } from "./NBTVisitor.ts";
 
 export class NBTLongArray extends NBTElement {
   private value: bigint[]
@@ -20,16 +23,25 @@ export class NBTLongArray extends NBTElement {
     for (let i = 0; i < this.value.length; i++) writer.writeLong(this.value[i])
   }
 
-  public static reader = {
-    read<NBTLongArray>(reader: BinaryReader): NBTLongArray {
+  public acceptWriter(visitor: NBTVisitor): void {
+    visitor.visitLongArray(this)
+  }
+
+  public static TYPE: NBTType<NBTLongArray> = new class extends NBTType<NBTLongArray> {
+    public read<NBTLongArray>(reader: BinaryReader): NBTLongArray {
       const l = reader.readInt()
       const arr = new Array(l)
-      for (let i = 0; i < l; i++) {
-        arr[i] = reader.readLong()
-      }
-
+      reader.readFully(arr)
       return new NBTLongArray(arr) as unknown as NBTLongArray
     }
+  
+    public getTreeViewName(): string {
+      return 'TAG_Long_Array'
+    }
+  }
+
+  public getNBTType(): NBTType<NBTLongArray> {
+    return NBTLongArray.TYPE
   }
 
   public set(i: number, element: NBTLong): NBTLong {
@@ -56,5 +68,22 @@ export class NBTLongArray extends NBTElement {
   
   public getLongArray(): bigint[] {
     return this.value
+  }
+
+  public asString(): string {
+    return new StringNBTWriter().apply(this)
+  }
+
+  /** @deprecated */
+  public static reader = {
+    read<NBTLongArray>(reader: BinaryReader): NBTLongArray {
+      const l = reader.readInt()
+      const arr = new Array(l)
+      for (let i = 0; i < l; i++) {
+        arr[i] = reader.readLong()
+      }
+
+      return new NBTLongArray(arr) as unknown as NBTLongArray
+    }
   }
 }
