@@ -1,8 +1,6 @@
 # MC-KM-NBT
 
-[![deno land](http://img.shields.io/badge/available%20on-deno.land/x-lightgrey.svg?logo=deno&labelColor=black)](https://deno.land/x/fkm_nbt) [![GitHub release](https://img.shields.io/github/release/KalmeMarq/FKM-NBT.svg)](https://github.com/KalmeMarq/FKM-NBT/releases) [![npm](https://badge.fury.io/js/fkm-nbt.svg)](https://badge.fury.io/js/fkm-nbt)
-
-It's still in early development so not everything is done or expected to work yet
+[![version](https://img.shields.io/github/v/release/KalmeMarq/FKM-NBT?color=7500A4&label=&style=for-the-badge)](https://github.com/KalmeMarq/FKM-NBT/releases)&nbsp;&nbsp;[![deno](https://img.shields.io/badge/View%20on%20Deno-0E7EEE?style=for-the-badge&logo=deno&logoColor=white)](https://deno.land/x/fkm_nbt)&nbsp;&nbsp;[![npm](https://img.shields.io/badge/View%20on%20Deno-0A0?style=for-the-badge&logo=npm&logoColor=white)](https://www.npmjs.com/package/fkm-nbt)&nbsp;
 
 #### Coming Soon
 ```ts
