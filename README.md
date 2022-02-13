@@ -1,4 +1,4 @@
-# MC-KM-NBT
+# FKM NBT
 
 [![version](https://img.shields.io/github/v/release/KalmeMarq/FKM-NBT?color=7500A4&label=&style=for-the-badge)](https://github.com/KalmeMarq/FKM-NBT/releases)&nbsp;&nbsp;[![deno](https://img.shields.io/badge/View%20on%20Deno-0E7EEE?style=for-the-badge&logo=deno&logoColor=white)](https://deno.land/x/fkm_nbt)&nbsp;&nbsp;[![npm](https://img.shields.io/badge/View%20on%20NPM-0A0?style=for-the-badge&logo=npm&logoColor=white)](https://www.npmjs.com/package/fkm-nbt)&nbsp;
 
